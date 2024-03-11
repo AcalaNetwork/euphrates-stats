@@ -17,7 +17,7 @@ SELECT
     dot_tvl."ldot_starlay" AS "ldot",
     dot_tvl."lcdot_ldot_volume" + dot_tvl."lcdot_tdot_volume" AS "cumulative_lcdot",
     dot_tvl."dot_ldot_volume" + dot_tvl."dot_tdot_volume" + dot_tvl."dot_idot_volume" AS "cumulative_dot",
-    dot_tvl."ldot_starlay" AS "cumulative_ldot"
+    dot_tvl."ldot_ildot_volume" AS "cumulative_ldot"
 from (
     SELECT
         eds."day_timestamp",
