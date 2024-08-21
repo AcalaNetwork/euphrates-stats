@@ -1,28 +1,45 @@
 -- part of a query repo
--- query name: latest_overall_stats
+-- query name: latest_euphrates_stats
 -- query link: https://dune.com/queries/3397059
 
 
-SELECT
-    t1.day_timestamp,
-    t1.TOTAL as total_value_locked,
-    t2.total as total_dot_locked,
-    t2."lcdot_ldot",
-    t2."lcdot_tdot",
-    t2."dot_ldot",
-    t2."dot_tdot",
-    t2."cumulative_dot" + t2."cumulative_lcdot" + t2."cumulative_ldot" as total_dot_volume,
-    t3.total_tx_count
-FROM 
-    query_3396975 t1 -- total value locked
-JOIN 
-    query_3393781 t2 -- total dot locked
-ON 
-    t1.day_timestamp = t2.day_timestamp 
-JOIN 
-    query_3397026 t3 -- transaction & users
-ON 
-    t1.day_timestamp = t3.day_timestamp 
-ORDER BY 
-    t1.day_timestamp DESC 
-LIMIT 1;
+-- somehow LIMIT is not applied before sum
+-- so has to seperate the query
+WITH latest_pool_stats_7 AS (
+    SELECT *
+    FROM query_3988572 AS eps   -- euphrates pool stats
+    ORDER BY 1 DESC 
+    LIMIT 7                     -- 7 pools
+),
+
+latest_pool_stats AS (
+    SELECT
+        SUM(dot_amount_ui) AS total_dot_staked,
+        SUM(dot_usd) AS dot_tvl,
+        SUM(token_usd) AS tvl
+    FROM latest_pool_stats_7
+),
+
+latest_cumulative_stats_7 AS (
+    SELECT *
+    FROM query_3393781 AS tdl   -- total dot locked
+    ORDER BY 1 DESC 
+    LIMIT 7                     -- 7 pools
+),
+
+latest_cumulative_stats AS (
+    SELECT SUM(cumulative_dot_staked) AS cumulative_dot_staked
+    FROM latest_cumulative_stats_7   -- total dot locked
+),
+
+latest_tx_stats AS (
+    SELECT cumulative_tx_count
+    FROM query_3397026          -- users and transactions
+    ORDER BY 1 DESC 
+    LIMIT 1
+)
+
+SELECT *
+FROM latest_pool_stats A
+CROSS JOIN latest_cumulative_stats B
+CROSS JOIN latest_tx_stats C
